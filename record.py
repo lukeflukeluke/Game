@@ -88,8 +88,14 @@ def mix_audio(hits, seconds, rate, path):
     return {"hits": len(hits), "dropped": dropped, "clipped": clipped}
 
 
-def render(seed, out_path, cap, hold, crf, threads, quiet=False):
-    """Simulate seed to its finish and write the whole thing to out_path."""
+def render(seed, out_path, cap, outro, crf, threads, quiet=False):
+    """Simulate seed to its finish and write the whole thing to out_path.
+
+    The clip does not stop on the winning frame. It keeps playing for outro
+    seconds with the last ball alone in the circle, still bouncing, still
+    laying down trail and taking anchors off the wall -- a freeze frame reads
+    as the video ending, where a lap of the empty circle reads as a win.
+    """
     started = time.time()
     pygame.init()
 
@@ -116,10 +122,16 @@ def render(seed, out_path, cap, hold, crf, threads, quiet=False):
     balls = new_balls(seed)
     hits = []
     cap_frames = round(cap * FPS)
+    outro_frames = round(outro * FPS)
     frames = 0
-    last = None
+    won_at = None
 
-    while len(balls) > 1 and frames < cap_frames:
+    while frames < cap_frames:
+        if won_at is None and len(balls) <= 1:
+            won_at = frames
+        if won_at is not None and frames - won_at >= outro_frames:
+            break
+
         for speed in sim.advance(balls, DT):
             hits.append((frames * DT, speed))
         sim.update_trail(trail, stamp, balls)
@@ -130,22 +142,16 @@ def render(seed, out_path, cap, hold, crf, threads, quiet=False):
         frame.set_colorkey(sim.BLACK)
         screen.blit(frame, corner)
 
-        last = pygame.image.tobytes(screen, "RGB")
-        proc.stdin.write(last)
+        proc.stdin.write(pygame.image.tobytes(screen, "RGB"))
         frames += 1
         if not quiet and frames % (FPS * 5) == 0:
             print(f"\r  seed {seed}: {frames / FPS:5.1f}s rendered", end="",
                   file=sys.stderr, flush=True)
 
-    # hold the final frame so the winner is on screen long enough to read
-    held = round(hold * FPS) if last else 0
-    for _ in range(held):
-        proc.stdin.write(last)
-
     proc.stdin.close()
     proc.wait()
 
-    total = (frames + held) / FPS
+    total = frames / FPS
     audio = mix_audio(hits, total, sim.SAMPLE_RATE, wav)
 
     subprocess.run(
@@ -164,7 +170,8 @@ def render(seed, out_path, cap, hold, crf, threads, quiet=False):
               f"{time.time() - started:.0f}s to render -> {out_path}",
               file=sys.stderr)
     return {"seed": seed, "path": out_path, "seconds": round(total, 3),
-            "sim_seconds": round(frames / FPS, 3), "winner": winner, **audio}
+            "won_at": None if won_at is None else round(won_at / FPS, 3),
+            "winner": winner, **audio}
 
 
 def _one(job):
@@ -178,8 +185,8 @@ def main():
     ap.add_argument("--selection", help="selection.json from select.py")
     ap.add_argument("--out-dir", default="clips")
     ap.add_argument("--cap", type=float, default=90.0)
-    ap.add_argument("--hold", type=float, default=1.0,
-                    help="seconds to freeze on the winning frame")
+    ap.add_argument("--outro", type=float, default=2.0,
+                    help="seconds to keep playing after the win, winner alone")
     ap.add_argument("--crf", type=int, default=18)
     ap.add_argument("--jobs", type=int, default=1,
                     help="clips to render at once; each also runs an encoder")
@@ -195,7 +202,7 @@ def main():
     os.makedirs(args.out_dir, exist_ok=True)
     jobs = [
         (s, os.path.join(args.out_dir, f"seed{s:05d}.mp4"),
-         args.cap, args.hold, args.crf, args.threads, args.jobs > 1)
+         args.cap, args.outro, args.crf, args.threads, args.jobs > 1)
         for s in seeds
     ]
 

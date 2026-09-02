@@ -61,7 +61,10 @@ seed name a match: the survey's measurement and the recording of it are the
 same run, frame for frame. The live game still steps on real elapsed time, so
 playing a seed by hand will not reproduce its clip.
 
-Clip length is the run's length plus `--hold`, the freeze on the winning frame.
+Clip length is the run's length plus `--outro`, which keeps playing after the
+win with the last ball alone in the circle rather than freezing on the final
+frame -- a freeze reads as the video ending, a lap of the empty circle reads
+as a win.
 
 ## Tuning
 
