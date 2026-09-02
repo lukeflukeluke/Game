@@ -1,0 +1,653 @@
+{
+  "source": "runs.jsonl",
+  "window": [
+    60.0,
+    70.0
+  ],
+  "target": 60.0,
+  "limits": {
+    "purple": 1
+  },
+  "clips": [
+    {
+      "seed": 414,
+      "frames": 3614,
+      "seconds": 60.2333,
+      "outcome": "won",
+      "winner": "yellow",
+      "survivors": [
+        "yellow"
+      ],
+      "knockouts": [
+        {
+          "t": 1.7167,
+          "colour": "blue"
+        },
+        {
+          "t": 1.8167,
+          "colour": "purple"
+        },
+        {
+          "t": 3.8667,
+          "colour": "orange"
+        },
+        {
+          "t": 48.75,
+          "colour": "green"
+        },
+        {
+          "t": 60.2333,
+          "colour": "red"
+        }
+      ]
+    },
+    {
+      "seed": 227,
+      "frames": 3618,
+      "seconds": 60.3,
+      "outcome": "won",
+      "winner": "green",
+      "survivors": [
+        "green"
+      ],
+      "knockouts": [
+        {
+          "t": 1.9167,
+          "colour": "red"
+        },
+        {
+          "t": 3.3,
+          "colour": "blue"
+        },
+        {
+          "t": 27.05,
+          "colour": "yellow"
+        },
+        {
+          "t": 52.1833,
+          "colour": "purple"
+        },
+        {
+          "t": 60.3,
+          "colour": "orange"
+        }
+      ]
+    },
+    {
+      "seed": 929,
+      "frames": 3622,
+      "seconds": 60.3667,
+      "outcome": "won",
+      "winner": "red",
+      "survivors": [
+        "red"
+      ],
+      "knockouts": [
+        {
+          "t": 1.4667,
+          "colour": "blue"
+        },
+        {
+          "t": 3.7333,
+          "colour": "orange"
+        },
+        {
+          "t": 10.7167,
+          "colour": "yellow"
+        },
+        {
+          "t": 21.35,
+          "colour": "purple"
+        },
+        {
+          "t": 60.3667,
+          "colour": "green"
+        }
+      ]
+    },
+    {
+      "seed": 472,
+      "frames": 3636,
+      "seconds": 60.6,
+      "outcome": "won",
+      "winner": "green",
+      "survivors": [
+        "green"
+      ],
+      "knockouts": [
+        {
+          "t": 2.9333,
+          "colour": "purple"
+        },
+        {
+          "t": 3.2,
+          "colour": "blue"
+        },
+        {
+          "t": 16.8167,
+          "colour": "yellow"
+        },
+        {
+          "t": 22.55,
+          "colour": "orange"
+        },
+        {
+          "t": 60.6,
+          "colour": "red"
+        }
+      ]
+    },
+    {
+      "seed": 34,
+      "frames": 3651,
+      "seconds": 60.85,
+      "outcome": "won",
+      "winner": "blue",
+      "survivors": [
+        "blue"
+      ],
+      "knockouts": [
+        {
+          "t": 2.1,
+          "colour": "orange"
+        },
+        {
+          "t": 2.8,
+          "colour": "green"
+        },
+        {
+          "t": 4.5833,
+          "colour": "purple"
+        },
+        {
+          "t": 55.8667,
+          "colour": "red"
+        },
+        {
+          "t": 60.85,
+          "colour": "yellow"
+        }
+      ]
+    },
+    {
+      "seed": 101,
+      "frames": 3653,
+      "seconds": 60.8833,
+      "outcome": "won",
+      "winner": "green",
+      "survivors": [
+        "green"
+      ],
+      "knockouts": [
+        {
+          "t": 2.05,
+          "colour": "yellow"
+        },
+        {
+          "t": 2.0667,
+          "colour": "red"
+        },
+        {
+          "t": 6.7,
+          "colour": "purple"
+        },
+        {
+          "t": 41.3167,
+          "colour": "blue"
+        },
+        {
+          "t": 60.8833,
+          "colour": "orange"
+        }
+      ]
+    },
+    {
+      "seed": 536,
+      "frames": 3668,
+      "seconds": 61.1333,
+      "outcome": "won",
+      "winner": "green",
+      "survivors": [
+        "green"
+      ],
+      "knockouts": [
+        {
+          "t": 1.0167,
+          "colour": "yellow"
+        },
+        {
+          "t": 1.2,
+          "colour": "orange"
+        },
+        {
+          "t": 8.9333,
+          "colour": "blue"
+        },
+        {
+          "t": 56.35,
+          "colour": "purple"
+        },
+        {
+          "t": 61.1333,
+          "colour": "red"
+        }
+      ]
+    },
+    {
+      "seed": 466,
+      "frames": 3684,
+      "seconds": 61.4,
+      "outcome": "won",
+      "winner": "purple",
+      "survivors": [
+        "purple"
+      ],
+      "knockouts": [
+        {
+          "t": 0.8167,
+          "colour": "yellow"
+        },
+        {
+          "t": 4.6833,
+          "colour": "blue"
+        },
+        {
+          "t": 6.95,
+          "colour": "orange"
+        },
+        {
+          "t": 30.8,
+          "colour": "green"
+        },
+        {
+          "t": 61.4,
+          "colour": "red"
+        }
+      ]
+    },
+    {
+      "seed": 636,
+      "frames": 3701,
+      "seconds": 61.6833,
+      "outcome": "won",
+      "winner": "yellow",
+      "survivors": [
+        "yellow"
+      ],
+      "knockouts": [
+        {
+          "t": 1.6333,
+          "colour": "red"
+        },
+        {
+          "t": 2.9,
+          "colour": "orange"
+        },
+        {
+          "t": 8.2,
+          "colour": "green"
+        },
+        {
+          "t": 47.0,
+          "colour": "purple"
+        },
+        {
+          "t": 61.6833,
+          "colour": "blue"
+        }
+      ]
+    },
+    {
+      "seed": 361,
+      "frames": 3730,
+      "seconds": 62.1667,
+      "outcome": "won",
+      "winner": "orange",
+      "survivors": [
+        "orange"
+      ],
+      "knockouts": [
+        {
+          "t": 1.8333,
+          "colour": "yellow"
+        },
+        {
+          "t": 1.9167,
+          "colour": "green"
+        },
+        {
+          "t": 18.9667,
+          "colour": "purple"
+        },
+        {
+          "t": 37.7667,
+          "colour": "red"
+        },
+        {
+          "t": 62.1667,
+          "colour": "blue"
+        }
+      ]
+    },
+    {
+      "seed": 966,
+      "frames": 3758,
+      "seconds": 62.6333,
+      "outcome": "won",
+      "winner": "red",
+      "survivors": [
+        "red"
+      ],
+      "knockouts": [
+        {
+          "t": 3.3667,
+          "colour": "yellow"
+        },
+        {
+          "t": 6.0333,
+          "colour": "blue"
+        },
+        {
+          "t": 20.25,
+          "colour": "green"
+        },
+        {
+          "t": 29.5167,
+          "colour": "purple"
+        },
+        {
+          "t": 62.6333,
+          "colour": "orange"
+        }
+      ]
+    },
+    {
+      "seed": 808,
+      "frames": 3827,
+      "seconds": 63.7833,
+      "outcome": "won",
+      "winner": "orange",
+      "survivors": [
+        "orange"
+      ],
+      "knockouts": [
+        {
+          "t": 0.8833,
+          "colour": "yellow"
+        },
+        {
+          "t": 2.2833,
+          "colour": "blue"
+        },
+        {
+          "t": 4.2167,
+          "colour": "green"
+        },
+        {
+          "t": 6.0667,
+          "colour": "purple"
+        },
+        {
+          "t": 63.7833,
+          "colour": "red"
+        }
+      ]
+    },
+    {
+      "seed": 487,
+      "frames": 3830,
+      "seconds": 63.8333,
+      "outcome": "won",
+      "winner": "red",
+      "survivors": [
+        "red"
+      ],
+      "knockouts": [
+        {
+          "t": 0.8667,
+          "colour": "yellow"
+        },
+        {
+          "t": 2.8,
+          "colour": "orange"
+        },
+        {
+          "t": 5.9667,
+          "colour": "purple"
+        },
+        {
+          "t": 53.3,
+          "colour": "green"
+        },
+        {
+          "t": 63.8333,
+          "colour": "blue"
+        }
+      ]
+    },
+    {
+      "seed": 441,
+      "frames": 3841,
+      "seconds": 64.0167,
+      "outcome": "won",
+      "winner": "orange",
+      "survivors": [
+        "orange"
+      ],
+      "knockouts": [
+        {
+          "t": 1.1333,
+          "colour": "blue"
+        },
+        {
+          "t": 1.4667,
+          "colour": "green"
+        },
+        {
+          "t": 14.1333,
+          "colour": "purple"
+        },
+        {
+          "t": 33.0167,
+          "colour": "yellow"
+        },
+        {
+          "t": 64.0167,
+          "colour": "red"
+        }
+      ]
+    },
+    {
+      "seed": 874,
+      "frames": 3846,
+      "seconds": 64.1,
+      "outcome": "won",
+      "winner": "orange",
+      "survivors": [
+        "orange"
+      ],
+      "knockouts": [
+        {
+          "t": 2.8167,
+          "colour": "purple"
+        },
+        {
+          "t": 4.7333,
+          "colour": "green"
+        },
+        {
+          "t": 10.4167,
+          "colour": "blue"
+        },
+        {
+          "t": 41.5167,
+          "colour": "yellow"
+        },
+        {
+          "t": 64.1,
+          "colour": "red"
+        }
+      ]
+    },
+    {
+      "seed": 828,
+      "frames": 3857,
+      "seconds": 64.2833,
+      "outcome": "won",
+      "winner": "yellow",
+      "survivors": [
+        "yellow"
+      ],
+      "knockouts": [
+        {
+          "t": 1.1,
+          "colour": "green"
+        },
+        {
+          "t": 8.25,
+          "colour": "red"
+        },
+        {
+          "t": 11.9667,
+          "colour": "blue"
+        },
+        {
+          "t": 27.3,
+          "colour": "purple"
+        },
+        {
+          "t": 64.2833,
+          "colour": "orange"
+        }
+      ]
+    },
+    {
+      "seed": 814,
+      "frames": 3883,
+      "seconds": 64.7167,
+      "outcome": "won",
+      "winner": "yellow",
+      "survivors": [
+        "yellow"
+      ],
+      "knockouts": [
+        {
+          "t": 0.5333,
+          "colour": "red"
+        },
+        {
+          "t": 3.3167,
+          "colour": "blue"
+        },
+        {
+          "t": 11.7333,
+          "colour": "orange"
+        },
+        {
+          "t": 14.45,
+          "colour": "green"
+        },
+        {
+          "t": 64.7167,
+          "colour": "purple"
+        }
+      ]
+    },
+    {
+      "seed": 286,
+      "frames": 4006,
+      "seconds": 66.7667,
+      "outcome": "won",
+      "winner": "blue",
+      "survivors": [
+        "blue"
+      ],
+      "knockouts": [
+        {
+          "t": 1.45,
+          "colour": "red"
+        },
+        {
+          "t": 3.0167,
+          "colour": "purple"
+        },
+        {
+          "t": 11.8,
+          "colour": "green"
+        },
+        {
+          "t": 25.1167,
+          "colour": "yellow"
+        },
+        {
+          "t": 66.7667,
+          "colour": "orange"
+        }
+      ]
+    },
+    {
+      "seed": 972,
+      "frames": 4069,
+      "seconds": 67.8167,
+      "outcome": "won",
+      "winner": "blue",
+      "survivors": [
+        "blue"
+      ],
+      "knockouts": [
+        {
+          "t": 0.6333,
+          "colour": "yellow"
+        },
+        {
+          "t": 2.8,
+          "colour": "green"
+        },
+        {
+          "t": 3.9167,
+          "colour": "red"
+        },
+        {
+          "t": 26.9667,
+          "colour": "orange"
+        },
+        {
+          "t": 67.8167,
+          "colour": "purple"
+        }
+      ]
+    },
+    {
+      "seed": 64,
+      "frames": 4074,
+      "seconds": 67.9,
+      "outcome": "won",
+      "winner": "blue",
+      "survivors": [
+        "blue"
+      ],
+      "knockouts": [
+        {
+          "t": 1.25,
+          "colour": "purple"
+        },
+        {
+          "t": 4.6833,
+          "colour": "yellow"
+        },
+        {
+          "t": 5.2667,
+          "colour": "red"
+        },
+        {
+          "t": 18.65,
+          "colour": "orange"
+        },
+        {
+          "t": 67.9,
+          "colour": "green"
+        }
+      ]
+    }
+  ]
+}

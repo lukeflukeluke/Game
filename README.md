@@ -30,6 +30,39 @@ python balls_in_circle.py
 
 Press Escape or close the window to quit.
 
+## Recording a batch
+
+Rendering a run costs minutes; simulating one costs under a second. So the
+pipeline simulates first and only draws the runs that turned out to be worth
+drawing.
+
+```
+pip install -r requirements-recording.txt
+
+python3 survey.py --runs 1000 --cap 90 --out runs.jsonl
+python3 select.py --runs runs.jsonl --count 20 --low 60 --high 70 --limit purple=1
+python3 record.py --selection selection.json --out-dir clips --jobs 2
+```
+
+- `survey.py` plays seeds out with nothing drawn, four at a time, and writes
+  one line per run: how long it lasted, who won, when each ball went out. Runs
+  that have not settled by `--cap` are abandoned there; most never settle.
+- `select.py` filters that down to a window of lengths and fills per-colour
+  quotas -- `--limit purple=1` means at most one purple win, and the other
+  nineteen are shared round-robin between the remaining colours so the set is
+  not all one colour. Nothing has been encoded yet, so changing your mind here
+  is free.
+- `record.py` replays the chosen seeds and pipes raw frames to ffmpeg, mixing
+  the audio separately from the wall impacts the physics reports.
+
+The three share `runner.py`, which pins the step to a fixed 1/60s and seeds the
+one random choice in the game -- the six opening headings. That is what makes a
+seed name a match: the survey's measurement and the recording of it are the
+same run, frame for frame. The live game still steps on real elapsed time, so
+playing a seed by hand will not reproduce its clip.
+
+Clip length is the run's length plus `--hold`, the freeze on the winning frame.
+
 ## Tuning
 
 The constants at the top of `balls_in_circle.py` control the whole simulation:

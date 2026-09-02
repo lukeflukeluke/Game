@@ -1,0 +1,4 @@
+# Only needed for survey.py / select.py / record.py, not for playing the game.
+-r requirements.txt
+numpy>=1.21
+imageio-ffmpeg>=0.4  # ships a static ffmpeg; skip it if ffmpeg is on PATH

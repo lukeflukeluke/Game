@@ -93,13 +93,18 @@ def starting_anchors():
     return anchors
 
 
-def start_balls():
-    """Every ball at its original spot, heading off in a random direction."""
+def start_balls(rng=random):
+    """Every ball at its original spot, heading off in a random direction.
+
+    The headings are the only randomness in the whole simulation, so passing a
+    seeded random.Random makes a run reproducible: same seed, same match, frame
+    for frame. survey.py and record.py rely on that.
+    """
     balls = []
     fans = starting_anchors()
     for i in range(len(COLOURS)):
         base = 2 * math.pi * i / len(COLOURS)
-        heading = random.uniform(0, 2 * math.pi)
+        heading = rng.uniform(0, 2 * math.pi)
         balls.append(
             {
                 "x": OFFSET * math.cos(base),
@@ -145,11 +150,13 @@ def collide(balls):
             b["y"] += ny * push
 
 
-def bounce_tone(hardness, rate, channels):
-    """Build one impact sound. hardness runs 0 (light tick) to 1 (heavy thud).
+def bounce_samples(hardness, rate, channels=1):
+    """Raw 16-bit samples of one impact. hardness: 0 (light tick) to 1 (thud).
 
     Harder hits drop in pitch, ring longer and carry a brighter attack. That is
-    what separates a thud from a tick far more than volume alone does.
+    what separates a thud from a tick far more than volume alone does. Kept
+    apart from the mixer so an offline recording can build the same sound
+    without opening an audio device.
     """
     freq = 620 - 300 * hardness  # deeper the harder it lands
     decay = 95 - 55 * hardness  # and it rings on rather than clipping short
@@ -169,7 +176,12 @@ def bounce_tone(hardness, rate, channels):
         for _ in range(abs(channels)):
             samples.append(level)
 
-    return pygame.mixer.Sound(buffer=samples.tobytes())
+    return samples
+
+
+def bounce_tone(hardness, rate, channels):
+    """The same impact, handed to the mixer as a playable Sound."""
+    return pygame.mixer.Sound(buffer=bounce_samples(hardness, rate, channels).tobytes())
 
 
 def make_bounce_sounds():
@@ -399,14 +411,26 @@ def hardness(speed):
     return min(1.0, max(0.0, (speed - SOFT_HIT) / (HARD_HIT - SOFT_HIT)))
 
 
+def bounce_gain(h):
+    """How loud a hit of hardness h plays.
+
+    Curved, so soft hits drop away sharply instead of fading evenly.
+    """
+    return BOUNCE_VOLUME * (QUIETEST + (1 - QUIETEST) * h**1.7)
+
+
+def bounce_index(h):
+    """Which of the pre-rendered tones a hit of hardness h uses."""
+    return min(BOUNCE_TONES - 1, int(h * BOUNCE_TONES))
+
+
 def play_bounces(sounds, impacts):
     """One hit per wall contact, its weight chosen by how hard it landed."""
     for speed in impacts:
         h = hardness(speed)
-        channel = sounds[min(BOUNCE_TONES - 1, int(h * BOUNCE_TONES))].play()
+        channel = sounds[bounce_index(h)].play()
         if channel:
-            # curved, so soft hits drop away sharply instead of fading evenly
-            channel.set_volume(BOUNCE_VOLUME * (QUIETEST + (1 - QUIETEST) * h**1.7))
+            channel.set_volume(bounce_gain(h))
 
 
 def main():
