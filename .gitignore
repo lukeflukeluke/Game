@@ -5,4 +5,5 @@ venv/
 runs.jsonl
 clips/
 previews/
+hq/
 !clips/clips.json
