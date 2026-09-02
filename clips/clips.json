@@ -1,0 +1,202 @@
+[
+  {
+    "seed": 34,
+    "path": "clips/seed00034.mp4",
+    "seconds": 62.85,
+    "won_at": 60.85,
+    "winner": "blue",
+    "hits": 245,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 64,
+    "path": "clips/seed00064.mp4",
+    "seconds": 69.9,
+    "won_at": 67.9,
+    "winner": "blue",
+    "hits": 334,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 101,
+    "path": "clips/seed00101.mp4",
+    "seconds": 62.883,
+    "won_at": 60.883,
+    "winner": "green",
+    "hits": 177,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 227,
+    "path": "clips/seed00227.mp4",
+    "seconds": 62.3,
+    "won_at": 60.3,
+    "winner": "green",
+    "hits": 288,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 286,
+    "path": "clips/seed00286.mp4",
+    "seconds": 68.767,
+    "won_at": 66.767,
+    "winner": "blue",
+    "hits": 116,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 361,
+    "path": "clips/seed00361.mp4",
+    "seconds": 64.167,
+    "won_at": 62.167,
+    "winner": "orange",
+    "hits": 189,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 414,
+    "path": "clips/seed00414.mp4",
+    "seconds": 62.233,
+    "won_at": 60.233,
+    "winner": "yellow",
+    "hits": 221,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 441,
+    "path": "clips/seed00441.mp4",
+    "seconds": 66.017,
+    "won_at": 64.017,
+    "winner": "orange",
+    "hits": 255,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 466,
+    "path": "clips/seed00466.mp4",
+    "seconds": 63.4,
+    "won_at": 61.4,
+    "winner": "purple",
+    "hits": 275,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 472,
+    "path": "clips/seed00472.mp4",
+    "seconds": 62.6,
+    "won_at": 60.6,
+    "winner": "green",
+    "hits": 267,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 487,
+    "path": "clips/seed00487.mp4",
+    "seconds": 65.833,
+    "won_at": 63.833,
+    "winner": "red",
+    "hits": 193,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 536,
+    "path": "clips/seed00536.mp4",
+    "seconds": 63.133,
+    "won_at": 61.133,
+    "winner": "green",
+    "hits": 278,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 636,
+    "path": "clips/seed00636.mp4",
+    "seconds": 63.683,
+    "won_at": 61.683,
+    "winner": "yellow",
+    "hits": 210,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 808,
+    "path": "clips/seed00808.mp4",
+    "seconds": 65.783,
+    "won_at": 63.783,
+    "winner": "orange",
+    "hits": 226,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 814,
+    "path": "clips/seed00814.mp4",
+    "seconds": 66.717,
+    "won_at": 64.717,
+    "winner": "yellow",
+    "hits": 234,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 828,
+    "path": "clips/seed00828.mp4",
+    "seconds": 66.283,
+    "won_at": 64.283,
+    "winner": "yellow",
+    "hits": 271,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 874,
+    "path": "clips/seed00874.mp4",
+    "seconds": 66.1,
+    "won_at": 64.1,
+    "winner": "orange",
+    "hits": 331,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 929,
+    "path": "clips/seed00929.mp4",
+    "seconds": 62.367,
+    "won_at": 60.367,
+    "winner": "red",
+    "hits": 194,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 966,
+    "path": "clips/seed00966.mp4",
+    "seconds": 64.633,
+    "won_at": 62.633,
+    "winner": "red",
+    "hits": 253,
+    "dropped": 0,
+    "clipped": false
+  },
+  {
+    "seed": 972,
+    "path": "clips/seed00972.mp4",
+    "seconds": 69.817,
+    "won_at": 67.817,
+    "winner": "blue",
+    "hits": 275,
+    "dropped": 0,
+    "clipped": false
+  }
+]
