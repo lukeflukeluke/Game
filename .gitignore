@@ -4,4 +4,5 @@ __pycache__/
 venv/
 runs.jsonl
 clips/
+previews/
 !clips/clips.json
