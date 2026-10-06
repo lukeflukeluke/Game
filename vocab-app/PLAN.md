@@ -108,6 +108,29 @@ sentence it appeared in, in two taps on phone or PC (section 13.5). It lands in 
 Captured words **jump the queue** and get introduced within a day or two. Your original
 sentence becomes their first example and, later, one of their fill-in-the-blank tests.
 
+### 3.6 Academic focus
+
+The goal is the vocabulary of strong academic reading and writing. Basic academic lists
+(like the Academic Word List) are aimed at people learning English and are too easy for
+a native speaker; the placement test will put you above most of them anyway. The bank
+targets the tier above:
+
+- **Academic-ness score** for every candidate: how much more often it appears in
+  academic writing than in general text. It feeds the priority score in 3.4.
+- **Word families that do the most work in essays**, tagged so they get extra weight:
+  - stance and argument verbs: posit, contend, concede, refute, corroborate, undermine
+  - analysis words: salient, tenuous, pervasive, nuanced, contingent, ostensible
+  - connectors and structure: notwithstanding, conversely, albeit, hence, insofar as
+  - hedging: arguably, plausibly, tentatively
+- **Every entry carries a register label** (formal / neutral / informal) and
+  **essay-ready phrases** ("posit that...", "a salient feature of...", "the evidence
+  corroborates...").
+- **Writing prompts are set in essays** ("Use *corroborate* in a sentence from a history
+  essay"), using your subjects if you add them in settings.
+- **"Make it academic"** exercise (U3, section 5): rewrite a casual sentence in essay
+  register using the target word.
+- The reading companion (section 9) is aimed at textbooks, articles and papers.
+
 ### 3.4 Choosing today's new words
 
 Each queued word gets a priority score:
@@ -192,6 +215,7 @@ Two scheduled tracks per word: **Recognition** (word to meaning) and **Productio
 |---|---|---|---|
 | U1 | **Write your own sentence**, from a personal prompt ("Describe someone you know using *laconic*") | On reaching Use; again if production lapses later | AI (optional) or self-check |
 | U2 | **Use it today.** Two words a day to use in real conversation, texts or writing; next day: "Did you?" | From the Use stage on | You, logged |
+| U3 | **Make it academic.** A casual sentence ("The results kind of back up what she said") to rewrite in essay register with the target word ("The results corroborate her claim") | Use stage; alternates with U1 | AI (optional) or self-check against a model answer |
 
 ### Rules that apply to all exercises
 
@@ -286,6 +310,32 @@ item, scheduled like everything else. Classic confusables tagged in the bank
 (affect/effect, imply/infer, venal/venial, ambiguous/ambivalent) are introduced at least
 7 days apart, then drilled deliberately once both are stable.
 
+### 6.7 Your daily time, tailored
+
+You choose how many minutes a day (5 to 45), optionally different on weekdays and
+weekends. The app builds each day's session to fit what you chose. Starting defaults
+below are provisional; the scheduler simulation (build session S2) sets the real
+numbers, and after that the app adjusts to your own measured pace.
+
+| Daily time | New words/day | Also included |
+|---|---|---|
+| 5 min | 1 | Writing task every 3rd day |
+| 10 min | 3 | Writing task every other day |
+| 15 min (default) | 5 | 1 writing task a day |
+| 20 min | 7 | 1 writing task + contrast drills |
+| 30 min | 10 | 2 writing tasks + a suggested reading-companion text |
+
+How it holds you to it:
+- **The session fits the time.** When your time is nearly up, it stops adding new words
+  and only finishes what is due.
+- **Fortnightly check-in.** If you keep running over, skipping days or finishing early,
+  it suggests a better time and shows what the change would mean.
+- **Changes ease in.** Reviews lag behind new words by weeks, so cutting your time
+  doesn't cut today's reviews. The app lowers new words first and the load follows over
+  1-2 weeks.
+- **"Busy week ahead" mode** (exams, deadlines): pauses new words for a few days ahead
+  of time, so the busy week itself is light.
+
 ---
 
 ## 7. A daily session (15 minutes)
@@ -346,8 +396,6 @@ Total: about 12 reviews and 4-5 minutes of your time, spread over roughly 4 mont
   track, plus "decode it" exercises: an unseen word made of roots you know; guess what
   it means. This builds the skill of working out new words on your own, which grows
   your vocabulary beyond what you study.
-- **Kindle import** (if you read on a Kindle). Kindle's Vocabulary Builder saves every
-  word you look up *with its sentence*. Import that file and it all goes into the Inbox.
 
 ---
 
@@ -384,6 +432,7 @@ is one sense. A word with two useful senses becomes two entries, introduced week
 
 - Headword, part of speech, IPA, audio (device text-to-speech: free and offline)
 - Plain definition as a full sentence ("If someone is laconic, they..."), 20 words max
+- Register label (formal / neutral / informal) and essay-ready phrases (see 3.6)
 - Nuance note: 2-3 sentences on tone, formality, when to use it
 - 6 example sentences across settings: conversation, news, fiction, formal writing
 - 3 fill-in-the-blank sentences where the context clearly points to the word (a blank
@@ -607,7 +656,9 @@ Every phase ends with something you use daily.
 | 1. Core loop (on-device) | Placement test, new-word introduction, R1 R3 P1 P3, two-track FSRS with stages, daily session with load balancing, basic stats, export | You do a real daily session in the phone browser and on PC for 2 weeks |
 | 2. One app, two devices | Installable PWA + offline, sync server, Inbox and capture (share target, iOS Shortcut, bookmarklet) | Review on the phone, see it on the PC; capture works from both |
 | 3. Depth | R2 R4 P2 P4, confusion tracking, leeches, writing tasks with self-check, optional AI grading, use-it challenges, your sentences as blanks, bank to ~1,500 | Words start reaching Owned |
-| 4. Growth | Reading companion, roots module, monthly retest and growth chart, personal FSRS tuning, reminders, Kindle import, bank to 3,000+ | Vocabulary estimate trending up |
+| 4. Growth | Reading companion, roots module, monthly retest and growth chart, personal FSRS tuning, bank to 3,000+ | Vocabulary estimate trending up |
+
+The session-by-session build order is in [ROADMAP.md](ROADMAP.md).
 
 ---
 
@@ -623,14 +674,16 @@ Every phase ends with something you use daily.
 
 ---
 
-## 17. Open questions
+## 17. Decisions
 
-1. iPhone or Android? (Changes how capture and notifications are set up.)
-2. Is English your first language and the goal a richer, more precise vocabulary, or
-   are you learning English? This plan assumes the first.
-3. Any focus? General and literary, academic (essays, exams), professional, or a field
-   (law, science, ...)? This shapes the word bank's tags and priorities.
-4. Daily time: 10, 15 or 20 minutes?
-5. AI sentence feedback: worth up to a few dollars a month, and which tier? Or start
-   with the free options?
-6. Do you read on a Kindle? (Vocabulary Builder import.)
+| Question | Decision | What it changes |
+|---|---|---|
+| Phone | iPhone | Capture through an iOS Shortcut (13.5); reminders need the app added to the home screen (iOS 16.4+); everything is tested on iPhone Safari and as a home-screen app first |
+| Language | English is the first language; goal is a richer, more precise vocabulary | Frontier and word bank as planned |
+| Focus | Academic | Section 3.6: academic weighting, register labels, essay-ready phrases, essay writing prompts, U3 "Make it academic" |
+| Daily time | Your choice, and the app tailors itself to it | Section 6.7. Default 15 minutes |
+| AI | Word bank: written by Claude in content sessions ($0). Sentence feedback: free self-check and "Copy for review" first; AI grading switched on in build session S11 using the top-tier model with a $3/month cap (realistic use about $1-2/month). Cheaper tiers are an option. | Section 12; build session S11 |
+| Kindle | No | Kindle import removed |
+
+Still open (not blocking): your subjects and level (school, university), to make the
+writing prompts and example sentences more relevant. It can also be a setting in the app.
