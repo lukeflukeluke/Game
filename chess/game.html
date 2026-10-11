@@ -137,6 +137,9 @@ h1 .vs { color: var(--muted); font-size: .6em; padding-inline: .3em; }
 .ping { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ping code { font-family: var(--font-mono); background: var(--bg); border: 1px solid var(--rule); padding: 6px 10px; border-radius: 4px; user-select: all; }
 button.btn { font: 600 13px var(--font-body); border: 1px solid var(--ink); background: transparent; color: var(--ink); padding: 7px 12px; border-radius: 4px; cursor: pointer; }
+button.btn.primary { background: var(--ink); color: var(--surface); }
+button.btn:disabled { opacity: .55; cursor: default; }
+.ping .small { font-size: 13px; color: var(--muted); }
 button.btn:hover { background: var(--ink); color: var(--surface); }
 button.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .status p.small { font-size: 13px; color: var(--muted); }
@@ -295,7 +298,8 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     } else {
       pill = '<span class="pill claude">Claude is thinking</span>';
       body = "<p>Claude was notified of your move and will reply on this board. It usually takes under a minute.</p>" +
-        '<p class="small">No reply after a few minutes? Send this in the chat:</p>' +
+        '<div class="ping"><button class="btn primary" id="ping-claude">Send Claude a nudge</button><span class="small" id="ping-result"></span></div>' +
+        '<p class="small">If the button can\'t reach Claude, send this in the chat instead:</p>' +
         '<div class="ping"><code id="ping-text">your move</code><button class="btn" id="copy">Copy</button></div>';
     }
     el.innerHTML = pill + body;
@@ -307,6 +311,8 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
         const s = getSelection(); s.removeAllRanges(); s.addRange(r);
       });
     });
+    const ping = $("ping-claude");
+    if (ping) ping.addEventListener("click", () => nudgeClaude(ping));
     const over = game.game_over();
     $("tag-white").textContent = !over && game.turn() === "w" ? "to move" : "";
     $("tag-black").textContent = !over && game.turn() === "b" ? (docRef ? "thinking" : "to move") : "";
@@ -344,6 +350,34 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     } finally {
       saving = false;
       render();
+    }
+  }
+
+  // The nudge button messages the Claude chat that is playing this game,
+  // through the viewer's Claude Code Remote connector.
+  const CLAUDE_SESSION = "session_017ys9QBDZvGVVAgczaPWQ1S";
+  async function nudgeClaude(btn) {
+    const out = $("ping-result");
+    btn.disabled = true;
+    out.textContent = "Sending…";
+    try {
+      const mcp = await window.claude.use("mcp");
+      if (!mcp) { out.textContent = "This view can't send messages. Use the chat instead."; btn.disabled = false; return; }
+      const last = (state.moves || [])[state.moves.length - 1] || "";
+      await mcp.callTool("Claude Code Remote", "send_message", {
+        session_id: CLAUDE_SESSION,
+        message: "Chess board: Luke played " + last + " (move " + Math.ceil((state.moves || []).length / 2) + "). Your move."
+      }, { cache: false });
+      btn.textContent = "Sent";
+      out.textContent = "Claude got your nudge.";
+    } catch (e) {
+      const code = e && e.code;
+      btn.disabled = false;
+      out.textContent =
+        code === "server_not_connected" ? "The Claude Code Remote connector isn't connected. Use the chat instead." :
+        code === "not_in_manifest" || code === "approval_required" ? "Sending wasn't allowed. Tap again and choose Allow, or use the chat." :
+        code === "needs_reauth" ? "Reconnect Claude Code Remote in claude.ai Settings, then try again." :
+        "Couldn't send (" + (code || "error") + "). Use the chat instead.";
     }
   }
 
