@@ -1,4 +1,5 @@
 <title>Luke vs Claude</title>
+<script type="application/json" id="turn-marker">{"ply":0}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
@@ -138,6 +139,7 @@ h1 .vs { color: var(--muted); font-size: .6em; padding-inline: .3em; }
 button.btn { font: 600 13px var(--font-body); border: 1px solid var(--ink); background: transparent; color: var(--ink); padding: 7px 12px; border-radius: 4px; cursor: pointer; }
 button.btn:hover { background: var(--ink); color: var(--surface); }
 button.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.status p.small { font-size: 13px; color: var(--muted); }
 .note { font-style: italic; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 10px; }
 
 .sheet { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
@@ -291,10 +293,10 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
       pill = '<span class="pill you">Your move</span>';
       body = "<p>" + (game.in_check() ? "<strong>You are in check.</strong> " : "") + "Tap a white piece, then tap where it should go.</p>" + note;
     } else {
-      pill = '<span class="pill claude">Claude to move</span>';
-      body = '<p>Your move is on the board. Tell Claude in the chat so it can think and reply:</p>' +
-        '<div class="ping"><code id="ping-text">your move</code><button class="btn" id="copy">Copy</button></div>' +
-        "<p>The board updates on its own when Claude moves.</p>";
+      pill = '<span class="pill claude">Claude is thinking</span>';
+      body = "<p>Claude was notified of your move and will reply on this board. It usually takes under a minute.</p>" +
+        '<p class="small">No reply after a few minutes? Send this in the chat:</p>' +
+        '<div class="ping"><code id="ping-text">your move</code><button class="btn" id="copy">Copy</button></div>';
     }
     el.innerHTML = pill + body;
     const copy = $("copy");
@@ -307,7 +309,7 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     });
     const over = game.game_over();
     $("tag-white").textContent = !over && game.turn() === "w" ? "to move" : "";
-    $("tag-black").textContent = !over && game.turn() === "b" ? (docRef ? "thinking when you ping" : "to move") : "";
+    $("tag-black").textContent = !over && game.turn() === "b" ? (docRef ? "thinking" : "to move") : "";
     $("p-white").classList.toggle("to-move", !over && game.turn() === "w");
     $("p-black").classList.toggle("to-move", !over && game.turn() === "b");
     $("fen-label").textContent = "Move " + Math.ceil(((state.moves || []).length + 1) / 2);
@@ -336,11 +338,34 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     try {
       await docRef.set(next);
       showError("");
+      notifyClaude(next);
     } catch (e) {
       showError("Your move did not save (" + (e && e.code || "error") + "). Reload the page and try again.");
     } finally {
       saving = false;
       render();
+    }
+  }
+
+  // Saving a new version of this page wakes the Claude chat that is playing.
+  // The page republishes its own source (published alongside as page.html)
+  // with only the turn marker changed. Every open view then reloads, and the
+  // game itself is read back from the shared store.
+  const SKELETON_HEAD = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>\n';
+  async function notifyClaude(next) {
+    try {
+      const artifact = await window.claude.use("artifact");
+      if (!artifact) return;
+      const res = await fetch("page.html", { cache: "no-store" });
+      if (!res.ok) return;
+      const src = await res.text();
+      const marker = '<script type="application/json" id="turn-marker">' +
+        JSON.stringify({ ply: next.moves.length, last: next.moves[next.moves.length - 1] }) + "<\/script>";
+      const body = src.replace(/<script type="application\/json" id="turn-marker">[\s\S]*?<\/script>/, marker);
+      if (body === src) return;
+      await artifact.publish(SKELETON_HEAD + body + "\n</body></html>");
+    } catch (e) {
+      // The chat fallback in the status panel still works.
     }
   }
 
