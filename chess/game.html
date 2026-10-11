@@ -350,6 +350,7 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     state = next;
     saving = true;
     sendNudge(next.moves);
+    if (!game.game_over()) runAnalysis(next);
     render();
     try {
       await docRef.set(next);
@@ -359,6 +360,119 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     } finally {
       saving = false;
       render();
+    }
+  }
+
+  // Reply scanner. After Luke moves, this scores every legal reply for Claude
+  // with a short material search (3 plies plus capture chains) and stores the
+  // ranked list in games/analysis, which Claude reads before choosing a move.
+  const PIECE_VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+  function material(g) {
+    let s = 0;
+    for (const row of g.board()) for (const p of row) if (p) s += (p.color === "w" ? 1 : -1) * PIECE_VALUE[p.type];
+    return s;
+  }
+  function orderMoves(g) {
+    return g.moves({ verbose: true }).sort((a, b) =>
+      (b.captured ? PIECE_VALUE[b.captured] * 10 - PIECE_VALUE[b.piece] : 0) -
+      (a.captured ? PIECE_VALUE[a.captured] * 10 - PIECE_VALUE[a.piece] : 0));
+  }
+  function quiesce(g, alpha, beta, depth) {
+    const stand = material(g);
+    if (depth === 0) return stand;
+    const white = g.turn() === "w";
+    if (white) { if (stand >= beta) return stand; alpha = Math.max(alpha, stand); }
+    else { if (stand <= alpha) return stand; beta = Math.min(beta, stand); }
+    let best = stand;
+    for (const m of orderMoves(g)) {
+      if (!m.captured) continue;
+      g.move(m);
+      const v = quiesce(g, alpha, beta, depth - 1);
+      g.undo();
+      if (white) { best = Math.max(best, v); alpha = Math.max(alpha, v); }
+      else { best = Math.min(best, v); beta = Math.min(beta, v); }
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+  function negamaxish(g, depth, alpha, beta, ply) {
+    if (g.in_checkmate()) return g.turn() === "w" ? -1000 + ply : 1000 - ply;
+    if (g.in_draw() || g.in_stalemate() || g.in_threefold_repetition()) return 0;
+    if (depth === 0) return quiesce(g, alpha, beta, 4);
+    const white = g.turn() === "w";
+    let best = white ? -Infinity : Infinity;
+    for (const m of orderMoves(g)) {
+      g.move(m);
+      const v = negamaxish(g, depth - 1, alpha, beta, ply + 1);
+      g.undo();
+      if (white) { best = Math.max(best, v); alpha = Math.max(alpha, v); }
+      else { best = Math.min(best, v); beta = Math.min(beta, v); }
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+  // Scores one legal move for the side to move. Returns the material result in
+  // pawns from that side's view, plus the opponent's best reply.
+  function scoreMove(g, m, depth, sign) {
+    g.move(m);
+    let v, reply = "";
+    if (g.in_checkmate()) v = 1000 * sign;
+    else {
+      const white = g.turn() === "w";
+      let best = white ? -Infinity : Infinity;
+      for (const r of orderMoves(g)) {
+        g.move(r);
+        const rv = negamaxish(g, depth - 2, -Infinity, Infinity, 2);
+        g.undo();
+        if (white ? rv > best : rv < best) { best = rv; reply = r.san; }
+      }
+      v = Number.isFinite(best) ? best : 0;
+    }
+    g.undo();
+    return { san: m.san, score: sign * v, reply, mate: v === 1000 * sign };
+  }
+  // Scores every legal move for the side to move (Claude, Black), in pawns from
+  // Black's view. A quick pass covers every move, then the best few are looked
+  // at one ply deeper. Yields to the page between moves.
+  async function scanReplies(fen, shouldStop) {
+    const g = new Chess(fen);
+    const sign = g.turn() === "w" ? 1 : -1;
+    const wait = () => new Promise((r) => setTimeout(r, 0));
+    let out = [];
+    for (const m of orderMoves(g)) {
+      if (shouldStop && shouldStop()) return null;
+      out.push(scoreMove(g, m, 2, sign));
+      await wait();
+    }
+    out.sort((a, b) => b.score - a.score);
+    const deeper = [];
+    for (const o of out.slice(0, 4)) {
+      if (shouldStop && shouldStop()) return null;
+      const m = g.moves({ verbose: true }).find((x) => x.san === o.san);
+      deeper.push(Object.assign(scoreMove(g, m, 3, sign), { deep: true }));
+      await wait();
+    }
+    deeper.sort((a, b) => b.score - a.score);
+    return deeper.concat(out.slice(4));
+  }
+
+  let dbApi = null;
+  async function runAnalysis(next) {
+    if (!dbApi) return;
+    const ply = next.moves.length;
+    const ref = dbApi.doc("games/analysis");
+    try {
+      await ref.set({ ply, fen: next.fen, ready: false, startedAt: new Date().toISOString() });
+      const moves = await scanReplies(next.fen, () => state.moves.length !== ply);
+      if (!moves) return;
+      await ref.set({
+        ply, fen: next.fen, ready: true, finishedAt: new Date().toISOString(),
+        note: "Scores are material in pawns from Black's view after a short search. Starred moves were searched deeper. reply is White's best answer found.",
+        best: moves.slice(0, 8).map((m) => m.san + " " + (m.score > 0 ? "+" : "") + m.score + " (reply " + (m.reply || "-") + ")" + (m.deep ? " *" : "")),
+        moves: moves.map((m) => ({ san: m.san, score: m.score, reply: m.reply, deep: !!m.deep, mate: m.mate }))
+      });
+    } catch (e) {
+      // Claude can still scan the position itself if this fails.
     }
   }
 
@@ -474,6 +588,7 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
   (async function connect() {
     const db = window.claude && window.claude.use ? await window.claude.use("db") : null;
     if (!db) { render(); return; }
+    dbApi = db;
     docRef = db.doc("games/current");
     window.claude.use("comments").then((c) => { commentsApi = c; refreshNudge(); }, () => {});
     docRef.onSnapshot((snap) => {
