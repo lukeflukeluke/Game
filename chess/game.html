@@ -1,5 +1,4 @@
 <title>Luke vs Claude</title>
-<script type="application/json" id="turn-marker">{"ply":5,"last":"Bc4"}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
@@ -297,10 +296,15 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
       body = "<p>" + (game.in_check() ? "<strong>You are in check.</strong> " : "") + "Tap a white piece, then tap where it should go.</p>" + note;
     } else {
       pill = '<span class="pill claude">Claude is thinking</span>';
-      body = "<p>Claude was notified of your move and will reply on this board. It usually takes under a minute.</p>" +
-        '<div class="ping"><button class="btn primary" id="ping-claude">Send Claude a nudge</button><span class="small" id="ping-result"></span></div>' +
-        '<p class="small">If the button can\'t reach Claude, send this in the chat instead:</p>' +
-        '<div class="ping"><code id="ping-text">your move</code><button class="btn" id="copy">Copy</button></div>';
+      const plies = (state.moves || []).length;
+      if (nudge.ply === plies && nudge.status === "sent") {
+        body = "<p>Claude got your move automatically and will reply on this board. It usually takes under a minute.</p>" + noteChat();
+      } else if (nudge.ply === plies && nudge.status === "sending") {
+        body = "<p>Letting Claude know about your move…</p>";
+      } else {
+        body = "<p>" + (nudge.ply === plies && nudge.msg ? esc(nudge.msg) + " " : "If Claude hasn't replied yet, give it a nudge.") + "</p>" +
+          '<div class="ping"><button class="btn primary" id="ping-claude">Send Claude a nudge</button><span class="small" id="ping-result"></span></div>' + noteChat();
+      }
     }
     el.innerHTML = pill + body;
     const copy = $("copy");
@@ -319,6 +323,11 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     $("p-white").classList.toggle("to-move", !over && game.turn() === "w");
     $("p-black").classList.toggle("to-move", !over && game.turn() === "b");
     $("fen-label").textContent = "Move " + Math.ceil(((state.moves || []).length + 1) / 2);
+  }
+
+  function noteChat() {
+    return '<p class="small">No reply after a few minutes? Send this in the chat:</p>' +
+      '<div class="ping"><code id="ping-text">your move</code><button class="btn" id="copy">Copy</button></div>';
   }
 
   function render() { renderBoard(); renderSheet(); renderStatus(); }
@@ -340,11 +349,11 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     };
     state = next;
     saving = true;
+    sendNudge(next.moves);
     render();
     try {
       await docRef.set(next);
       showError("");
-      notifyClaude(next);
     } catch (e) {
       showError("Your move did not save (" + (e && e.code || "error") + "). Reload the page and try again.");
     } finally {
@@ -353,65 +362,51 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     }
   }
 
-  // The nudge button posts a comment on the board and sends it to Claude,
-  // which wakes the Claude chat that is playing this game.
+  // After each move the page posts a comment on the board and sends it to
+  // Claude, which wakes the Claude chat that is playing this game. It starts
+  // inside the tap that made the move, because sending needs a recent tap.
+  // The button is the fallback when the automatic send does not go through.
   let commentsApi = null;
+  let nudge = { ply: -1, status: "idle", msg: "" };
+
+  function failMessage(code) {
+    return code === "consent_required" || code === "forbidden" ? "Sending to Claude wasn't allowed. Tap the button and choose Allow." :
+      code === "rate_limited" ? "Too many nudges in a row. Wait a minute, then tap the button." :
+      code === "claude_unavailable" ? "Claude's chat isn't listening right now." :
+      code === "writers_only" ? "Only the board's owner can send to Claude." :
+      code === "no_session" ? "Claude's chat isn't listening right now." :
+      code === "off" || code === "unavailable" ? "Sending to Claude isn't available in this view." :
+      "Couldn't reach Claude (" + (code || "error") + ").";
+  }
+
+  async function sendNudge(moves) {
+    const ply = moves.length;
+    const last = moves[ply - 1] || "";
+    nudge = { ply, status: "sending", msg: "" };
+    try {
+      if (!commentsApi) throw { code: "unavailable" };
+      const anchor = await commentsApi.anchorFor(document.querySelector(".frame"));
+      await commentsApi.sendToClaude({ anchor, text: "Chess board: I played " + last + " (move " + Math.ceil(ply / 2) + "). Your move." });
+      if (nudge.ply === ply) nudge.status = "sent";
+    } catch (e) {
+      if (nudge.ply === ply) nudge = { ply, status: "failed", msg: failMessage(e && e.code) };
+    }
+    if (!saving) renderStatus();
+  }
+
   async function refreshNudge() {
     const btn = $("ping-claude"), out = $("ping-result");
     if (!btn) return;
-    if (!commentsApi) { btn.disabled = true; out.textContent = "Sending isn't available in this view. Use the chat instead."; return; }
-    let can;
-    try { can = await commentsApi.canSendToClaude(); } catch (e) { can = "off"; }
+    let can = "unavailable";
+    if (commentsApi) { try { can = await commentsApi.canSendToClaude(); } catch (e) { can = "off"; } }
     if (!$("ping-claude")) return;
-    if (can === "available") { btn.disabled = false; out.textContent = ""; return; }
-    btn.disabled = true;
-    out.textContent =
-      can === "writers_only" ? "Only the board's owner can send this. Use the chat instead." :
-      can === "no_session" ? "Claude's chat isn't listening right now. Send \"your move\" in the chat." :
-      "Sending isn't available in this view. Use the chat instead.";
-  }
-  async function nudgeClaude(btn) {
-    const out = $("ping-result");
-    btn.disabled = true;
-    out.textContent = "Sending…";
-    try {
-      const mv = state.moves || [];
-      const last = mv[mv.length - 1] || "";
-      const anchor = await commentsApi.anchorFor(document.querySelector(".frame"));
-      await commentsApi.sendToClaude({ anchor, text: "Chess board: I played " + last + " (move " + Math.ceil(mv.length / 2) + "). Your move." });
-      btn.textContent = "Sent";
-      out.textContent = "Claude got your nudge.";
-    } catch (e) {
-      const code = e && e.code;
-      btn.disabled = false;
-      out.textContent =
-        code === "consent_required" || code === "forbidden" ? "Sending wasn't allowed. Tap again and choose Allow, or use the chat." :
-        code === "rate_limited" ? "Too many nudges in a row. Wait a minute and try again." :
-        code === "claude_unavailable" ? "Claude's chat isn't listening right now. Send \"your move\" in the chat." :
-        "Couldn't send (" + (code || "error") + "). Use the chat instead.";
-    }
+    btn.disabled = can !== "available";
+    if (btn.disabled) out.textContent = failMessage(can) + " Use the chat instead.";
   }
 
-  // Saving a new version of this page wakes the Claude chat that is playing.
-  // The page republishes its own source (published alongside as page.html)
-  // with only the turn marker changed. Every open view then reloads, and the
-  // game itself is read back from the shared store.
-  const SKELETON_HEAD = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>\n';
-  async function notifyClaude(next) {
-    try {
-      const artifact = await window.claude.use("artifact");
-      if (!artifact) return;
-      const res = await fetch("page.html", { cache: "no-store" });
-      if (!res.ok) return;
-      const src = await res.text();
-      const marker = '<script type="application/json" id="turn-marker">' +
-        JSON.stringify({ ply: next.moves.length, last: next.moves[next.moves.length - 1] }) + "<\/script>";
-      const body = src.replace(/<script type="application\/json" id="turn-marker">[\s\S]*?<\/script>/, marker);
-      if (body === src) return;
-      await artifact.publish(SKELETON_HEAD + body + "\n</body></html>");
-    } catch (e) {
-      // The chat fallback in the status panel still works.
-    }
+  async function nudgeClaude(btn) {
+    btn.disabled = true;
+    await sendNudge(state.moves || []);
   }
 
   function askPromotion(from, to) {
