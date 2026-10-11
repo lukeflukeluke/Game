@@ -1,0 +1,447 @@
+<title>Luke vs Claude</title>
+<script type="application/json" id="turn-marker">{"ply":0}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: tournament table. Board on the left, a paper scoresheet on the right; stacks on phones. */
+:root {
+  --bg: #e9e6dc;
+  --surface: #f6f4ee;
+  --ink: #23271f;
+  --muted: #6c7064;
+  --rule: #cfcabb;
+  --light-sq: #e4dcc3;
+  --dark-sq: #5f7a5a;
+  --frame: #2f3a2c;
+  --accent: #b2552e;
+  --hint: rgba(35, 39, 31, .28);
+  --last: rgba(214, 170, 60, .55);
+  --check: rgba(196, 52, 40, .7);
+  --piece-w: #fbf8ef;
+  --piece-b: #1d1f1a;
+  --font-display: "Young Serif", Georgia, serif;
+  --font-body: "Figtree", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171a16; --surface: #20241e; --ink: #e8e6dc; --muted: #9a9e90; --rule: #343a31;
+    --light-sq: #c9c0a4; --dark-sq: #4d6649; --frame: #0e100d; --accent: #e07c50;
+    --hint: rgba(20, 22, 18, .38); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171a16; --surface: #20241e; --ink: #e8e6dc; --muted: #9a9e90; --rule: #343a31;
+  --light-sq: #c9c0a4; --dark-sq: #4d6649; --frame: #0e100d; --accent: #e07c50;
+  --hint: rgba(20, 22, 18, .38); color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body { -webkit-text-size-adjust: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; padding-inline: 16px; padding-block: 24px 40px; }
+.wrap { max-width: 1000px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(26px, 4vw, 34px); margin: 0; text-wrap: balance; }
+h1 .vs { color: var(--muted); font-size: .6em; padding-inline: .3em; }
+.event { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.table { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 820px) { .table { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) {
+  body { padding-inline: 10px; padding-block: 14px 32px; }
+  .wrap { gap: 14px; }
+  .table { gap: 14px; }
+  .frame { padding: 14px; }
+  .files { left: 14px; right: 14px; bottom: 0; }
+  .ranks { top: 14px; bottom: 14px; left: 3px; }
+  .coords { font-size: 9px; }
+  .rows { max-height: 220px; }
+  button.btn { padding: 10px 14px; font-size: 14px; }
+}
+
+/* Board */
+.board-col { display: grid; gap: 10px; min-width: 0; }
+.player { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.player .dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--ink); }
+.player.white .dot { background: var(--piece-w); }
+.player.black .dot { background: var(--piece-b); }
+.player .tag { font-family: var(--font-mono); font-size: 11px; font-weight: 400; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; }
+.player.to-move .tag { color: var(--accent); }
+.frame { background: var(--frame); padding: 18px; border-radius: 6px; position: relative; max-width: 100%; }
+.board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); aspect-ratio: 1; max-width: 100%; user-select: none; touch-action: manipulation; }
+.sq { -webkit-tap-highlight-color: transparent; -webkit-appearance: none; appearance: none; border-radius: 0; position: relative; display: grid; place-items: center; cursor: default; border: 0; padding: 0; font: inherit; }
+.sq.l { background: var(--light-sq); }
+.sq.d { background: var(--dark-sq); }
+.sq.last::before { content: ""; position: absolute; inset: 0; background: var(--last); }
+.sq.check::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, var(--check) 0%, transparent 72%); }
+.sq.sel::before { content: ""; position: absolute; inset: 0; background: var(--last); box-shadow: inset 0 0 0 3px var(--accent); }
+.sq.can { cursor: pointer; }
+.sq.target { cursor: pointer; }
+.sq.target::after { content: ""; position: absolute; width: 30%; height: 30%; border-radius: 50%; background: var(--hint); }
+.sq.target.cap::after { width: 86%; height: 86%; background: transparent; box-shadow: inset 0 0 0 5px var(--hint); }
+.sq:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; z-index: 2; }
+.pc { position: relative; z-index: 1; width: 92%; height: 92%; background-size: contain; background-repeat: no-repeat; background-position: center; pointer-events: none; }
+.coords { position: absolute; font-family: var(--font-mono); font-size: 10px; color: #c9c3ad; pointer-events: none; }
+.files { left: 18px; right: 18px; bottom: 2px; display: grid; grid-template-columns: repeat(8, 1fr); text-align: center; }
+.ranks { top: 18px; bottom: 18px; left: 5px; display: grid; grid-template-rows: repeat(8, 1fr); align-items: center; }
+.promo { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(14, 16, 13, .55); z-index: 5; border-radius: 6px; }
+.promo-box { background: var(--surface); padding: 14px; border-radius: 6px; display: grid; gap: 10px; text-align: center; }
+.promo-box .opts { display: flex; gap: 6px; }
+.promo-box button { width: 56px; height: 56px; border: 1px solid var(--rule); background: var(--light-sq); border-radius: 4px; cursor: pointer; }
+.promo-box button { display: grid; place-items: center; }
+.promo-box button .pc { width: 44px; height: 44px; }
+/* Pieces: cburnett set (Colin M.L. Burnett, via chessground), embedded so they render the same on every device */
+.pc.cw.tp {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyLjUgOWMtMi4yMSAwLTQgMS43OS00IDQgMCAuODkuMjkgMS43MS43OCAyLjM4QzE3LjMzIDE2LjUgMTYgMTguNTkgMTYgMjFjMCAyLjAzLjk0IDMuODQgMi40MSA1LjAzLTMgMS4wNi03LjQxIDUuNTUtNy40MSAxMy40N2gyM2MwLTcuOTItNC40MS0xMi40MS03LjQxLTEzLjQ3IDEuNDctMS4xOSAyLjQxLTMgMi40MS01LjAzIDAtMi40MS0xLjMzLTQuNS0zLjI4LTUuNjIuNDktLjY3Ljc4LTEuNDkuNzgtMi4zOCAwLTIuMjEtMS43OS00LTQtNHoiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==');
+}
+.pc.cw.tb {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIGZpbGw9IiNmZmYiIHN0cm9rZS1saW5lY2FwPSJidXR0Ij48cGF0aCBkPSJNOSAzNmMzLjM5LS45NyAxMC4xMS40MyAxMy41LTIgMy4zOSAyLjQzIDEwLjExIDEuMDMgMTMuNSAyIDAgMCAxLjY1LjU0IDMgMi0uNjguOTctMS42NS45OS0zIC41LTMuMzktLjk3LTEwLjExLjQ2LTEzLjUtMS0zLjM5IDEuNDYtMTAuMTEuMDMtMTMuNSAxLTEuMzU0LjQ5LTIuMzIzLjQ3LTMtLjUgMS4zNTQtMS45NCAzLTIgMy0yeiIvPjxwYXRoIGQ9Ik0xNSAzMmMyLjUgMi41IDEyLjUgMi41IDE1IDAgLjUtMS41IDAtMiAwLTIgMC0yLjUtMi41LTQtMi41LTQgNS41LTEuNSA2LTExLjUtNS0xNS41LTExIDQtMTAuNSAxNC01IDE1LjUgMCAwLTIuNSAxLjUtMi41IDQgMCAwLS41LjUgMCAyeiIvPjxwYXRoIGQ9Ik0yNSA4YTIuNSAyLjUgMCAxIDEtNSAwIDIuNSAyLjUgMCAxIDEgNSAweiIvPjwvZz48cGF0aCBkPSJNMTcuNSAyNmgxME0xNSAzMGgxNW0tNy41LTE0LjV2NU0yMCAxOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PC9nPjwvc3ZnPg==');
+}
+.pc.cw.tn {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMiAxMGMxMC41IDEgMTYuNSA4IDE2IDI5SDE1YzAtOSAxMC02LjUgOC0yMSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNCAxOGMuMzggMi45MS01LjU1IDcuMzctOCA5LTMgMi0yLjgyIDQuMzQtNSA0LTEuMDQyLS45NCAxLjQxLTMuMDQgMC0zLTEgMCAuMTkgMS4yMy0xIDItMSAwLTQuMDAzIDEtNC00IDAtMiA2LTEyIDYtMTJzMS44OS0xLjkgMi0zLjVjLS43My0uOTk0LS41LTItLjUtMyAxLTEgMyAyLjUgMyAyLjVoMnMuNzgtMS45OTIgMi41LTNjMSAwIDEgMyAxIDMiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOS41IDI1LjVhLjUuNSAwIDEgMS0xIDAgLjUuNSAwIDEgMSAxIDB6bTUuNDMzLTkuNzVhLjUgMS41IDMwIDEgMS0uODY2LS41LjUgMS41IDMwIDEgMSAuODY2LjV6IiBmaWxsPSIjMDAwIi8+PC9nPjwvc3ZnPg==');
+}
+.pc.cw.tr {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik05IDM5aDI3di0zSDl2M3ptMy0zdi00aDIxdjRIMTJ6bS0xLTIyVjloNHYyaDVWOWg1djJoNVY5aDR2NSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNMzQgMTRsLTMgM0gxNGwtMy0zIi8+PHBhdGggZD0iTTMxIDE3djEyLjVIMTRWMTciIHN0cm9rZS1saW5lY2FwPSJidXR0IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTMxIDI5LjVsMS41IDIuNWgtMjBsMS41LTIuNSIvPjxwYXRoIGQ9Ik0xMSAxNGgyMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvZz48L3N2Zz4=');
+}
+.pc.cw.tq {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik04IDEyYTIgMiAwIDEgMS00IDAgMiAyIDAgMSAxIDQgMHptMTYuNS00LjVhMiAyIDAgMSAxLTQgMCAyIDIgMCAxIDEgNCAwek00MSAxMmEyIDIgMCAxIDEtNCAwIDIgMiAwIDEgMSA0IDB6TTE2IDguNWEyIDIgMCAxIDEtNCAwIDIgMiAwIDEgMSA0IDB6TTMzIDlhMiAyIDAgMSAxLTQgMCAyIDIgMCAxIDEgNCAweiIvPjxwYXRoIGQ9Ik05IDI2YzguNS0xLjUgMjEtMS41IDI3IDBsMi0xMi03IDExVjExbC01LjUgMTMuNS0zLTE1LTMgMTUtNS41LTE0VjI1TDcgMTRsMiAxMnoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTkgMjZjMCAyIDEuNSAyIDIuNSA0IDEgMS41IDEgMSAuNSAzLjUtMS41IDEtMS41IDIuNS0xLjUgMi41LTEuNSAxLjUuNSAyLjUuNSAyLjUgNi41IDEgMTYuNSAxIDIzIDAgMCAwIDEuNS0xIDAtMi41IDAgMCAuNS0xLjUtMS0yLjUtLjUtMi41LS41LTIgLjUtMy41IDEtMiAyLjUtMiAyLjUtNC04LjUtMS41LTE4LjUtMS41LTI3IDB6IiBzdHJva2UtbGluZWNhcD0iYnV0dCIvPjxwYXRoIGQ9Ik0xMS41IDMwYzMuNS0xIDE4LjUtMSAyMiAwTTEyIDMzLjVjNi0xIDE1LTEgMjEgMCIgZmlsbD0ibm9uZSIvPjwvZz48L3N2Zz4=');
+}
+.pc.cw.tk {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMi41IDExLjYzVjZNMjAgOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTIyLjUgMjVzNC41LTcuNSAzLTEwLjVjMCAwLTEtMi41LTMtMi41cy0zIDIuNS0zIDIuNWMtMS41IDMgMyAxMC41IDMgMTAuNSIgZmlsbD0iI2ZmZiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMTEuNSAzN2M1LjUgMy41IDE1LjUgMy41IDIxIDB2LTdzOS00LjUgNi0xMC41Yy00LTYuNS0xMy41LTMuNS0xNiA0VjI3di0zLjVjLTMuNS03LjUtMTMtMTAuNS0xNi00LTMgNiA1IDEwIDUgMTBWMzd6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTExLjUgMzBjNS41LTMgMTUuNS0zIDIxIDBtLTIxIDMuNWM1LjUtMyAxNS41LTMgMjEgMG0tMjEgMy41YzUuNS0zIDE1LjUtMyAyMSAwIi8+PC9nPjwvc3ZnPg==');
+}
+.pc.cb.tp {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyLjUgOWMtMi4yMSAwLTQgMS43OS00IDQgMCAuODkuMjkgMS43MS43OCAyLjM4QzE3LjMzIDE2LjUgMTYgMTguNTkgMTYgMjFjMCAyLjAzLjk0IDMuODQgMi40MSA1LjAzLTMgMS4wNi03LjQxIDUuNTUtNy40MSAxMy40N2gyM2MwLTcuOTItNC40MS0xMi40MS03LjQxLTEzLjQ3IDEuNDctMS4xOSAyLjQxLTMgMi40MS01LjAzIDAtMi40MS0xLjMzLTQuNS0zLjI4LTUuNjIuNDktLjY3Ljc4LTEuNDkuNzgtMi4zOCAwLTIuMjEtMS43OS00LTQtNHoiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==');
+}
+.pc.cb.tb {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIGZpbGw9IiMwMDAiIHN0cm9rZS1saW5lY2FwPSJidXR0Ij48cGF0aCBkPSJNOSAzNmMzLjM5LS45NyAxMC4xMS40MyAxMy41LTIgMy4zOSAyLjQzIDEwLjExIDEuMDMgMTMuNSAyIDAgMCAxLjY1LjU0IDMgMi0uNjguOTctMS42NS45OS0zIC41LTMuMzktLjk3LTEwLjExLjQ2LTEzLjUtMS0zLjM5IDEuNDYtMTAuMTEuMDMtMTMuNSAxLTEuMzU0LjQ5LTIuMzIzLjQ3LTMtLjUgMS4zNTQtMS45NCAzLTIgMy0yeiIvPjxwYXRoIGQ9Ik0xNSAzMmMyLjUgMi41IDEyLjUgMi41IDE1IDAgLjUtMS41IDAtMiAwLTIgMC0yLjUtMi41LTQtMi41LTQgNS41LTEuNSA2LTExLjUtNS0xNS41LTExIDQtMTAuNSAxNC01IDE1LjUgMCAwLTIuNSAxLjUtMi41IDQgMCAwLS41LjUgMCAyeiIvPjxwYXRoIGQ9Ik0yNSA4YTIuNSAyLjUgMCAxIDEtNSAwIDIuNSAyLjUgMCAxIDEgNSAweiIvPjwvZz48cGF0aCBkPSJNMTcuNSAyNmgxME0xNSAzMGgxNW0tNy41LTE0LjV2NU0yMCAxOGg1IiBzdHJva2U9IiNlY2VjZWMiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48L2c+PC9zdmc+');
+}
+.pc.cb.tn {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMiAxMGMxMC41IDEgMTYuNSA4IDE2IDI5SDE1YzAtOSAxMC02LjUgOC0yMSIgZmlsbD0iIzAwMCIvPjxwYXRoIGQ9Ik0yNCAxOGMuMzggMi45MS01LjU1IDcuMzctOCA5LTMgMi0yLjgyIDQuMzQtNSA0LTEuMDQyLS45NCAxLjQxLTMuMDQgMC0zLTEgMCAuMTkgMS4yMy0xIDItMSAwLTQuMDAzIDEtNC00IDAtMiA2LTEyIDYtMTJzMS44OS0xLjkgMi0zLjVjLS43My0uOTk0LS41LTItLjUtMyAxLTEgMyAyLjUgMyAyLjVoMnMuNzgtMS45OTIgMi41LTNjMSAwIDEgMyAxIDMiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJNOS41IDI1LjVhLjUuNSAwIDEgMS0xIDAgLjUuNSAwIDEgMSAxIDB6bTUuNDMzLTkuNzVhLjUgMS41IDMwIDEgMS0uODY2LS41LjUgMS41IDMwIDEgMSAuODY2LjV6IiBmaWxsPSIjZWNlY2VjIiBzdHJva2U9IiNlY2VjZWMiLz48cGF0aCBkPSJNMjQuNTUgMTAuNGwtLjQ1IDEuNDUuNS4xNWMzLjE1IDEgNS42NSAyLjQ5IDcuOSA2Ljc1UzM1Ljc1IDI5LjA2IDM1LjI1IDM5bC0uMDUuNWgyLjI1bC4wNS0uNWMuNS0xMC4wNi0uODgtMTYuODUtMy4yNS0yMS4zNC0yLjM3LTQuNDktNS43OS02LjY0LTkuMTktNy4xNmwtLjUxLS4xeiIgZmlsbD0iI2VjZWNlYyIgc3Ryb2tlPSJub25lIi8+PC9nPjwvc3ZnPg==');
+}
+.pc.cb.tr {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik05IDM5aDI3di0zSDl2M3ptMy41LTdsMS41LTIuNWgxN2wxLjUgMi41aC0yMHptLS41IDR2LTRoMjF2NEgxMnoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTE0IDI5LjV2LTEzaDE3djEzSDE0eiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMTQgMTYuNUwxMSAxNGgyM2wtMyAyLjVIMTR6TTExIDE0VjloNHYyaDVWOWg1djJoNVY5aDR2NUgxMXoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTEyIDM1LjVoMjFtLTIwLTRoMTltLTE4LTJoMTdtLTE3LTEzaDE3TTExIDE0aDIzIiBmaWxsPSJub25lIiBzdHJva2U9IiNlY2VjZWMiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvZz48L3N2Zz4=');
+}
+.pc.cb.tq {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIHN0cm9rZT0ibm9uZSI+PGNpcmNsZSBjeD0iNiIgY3k9IjEyIiByPSIyLjc1Ii8+PGNpcmNsZSBjeD0iMTQiIGN5PSI5IiByPSIyLjc1Ii8+PGNpcmNsZSBjeD0iMjIuNSIgY3k9IjgiIHI9IjIuNzUiLz48Y2lyY2xlIGN4PSIzMSIgY3k9IjkiIHI9IjIuNzUiLz48Y2lyY2xlIGN4PSIzOSIgY3k9IjEyIiByPSIyLjc1Ii8+PC9nPjxwYXRoIGQ9Ik05IDI2YzguNS0xLjUgMjEtMS41IDI3IDBsMi41LTEyLjVMMzEgMjVsLS4zLTE0LjEtNS4yIDEzLjYtMy0xNC41LTMgMTQuNS01LjItMTMuNkwxNCAyNSA2LjUgMTMuNSA5IDI2eiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNOSAyNmMwIDIgMS41IDIgMi41IDQgMSAxLjUgMSAxIC41IDMuNS0xLjUgMS0xLjUgMi41LTEuNSAyLjUtMS41IDEuNS41IDIuNS41IDIuNSA2LjUgMSAxNi41IDEgMjMgMCAwIDAgMS41LTEgMC0yLjUgMCAwIC41LTEuNS0xLTIuNS0uNS0yLjUtLjUtMiAuNS0zLjUgMS0yIDIuNS0yIDIuNS00LTguNS0xLjUtMTguNS0xLjUtMjcgMHoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTExIDM4LjVhMzUgMzUgMSAwIDAgMjMgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNMTEgMjlhMzUgMzUgMSAwIDEgMjMgMG0tMjEuNSAyLjVoMjBtLTIxIDNhMzUgMzUgMSAwIDAgMjIgMG0tMjMgM2EzNSAzNSAxIDAgMCAyNCAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNlY2VjZWMiLz48L2c+PC9zdmc+');
+}
+.pc.cb.tk {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMi41IDExLjYzVjYiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMjIuNSAyNXM0LjUtNy41IDMtMTAuNWMwIDAtMS0yLjUtMy0yLjVzLTMgMi41LTMgMi41Yy0xLjUgMyAzIDEwLjUgMyAxMC41IiBmaWxsPSIjMDAwIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjxwYXRoIGQ9Ik0xMS41IDM3YzUuNSAzLjUgMTUuNSAzLjUgMjEgMHYtN3M5LTQuNSA2LTEwLjVjLTQtNi41LTEzLjUtMy41LTE2IDRWMjd2LTMuNWMtMy41LTcuNS0xMy0xMC41LTE2LTQtMyA2IDUgMTAgNSAxMFYzN3oiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJNMjAgOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTMyIDI5LjVzOC41LTQgNi4wMy05LjY1QzM0LjE1IDE0IDI1IDE4IDIyLjUgMjQuNWwuMDEgMi4xLS4wMS0yLjFDMjAgMTggOS45MDYgMTQgNi45OTcgMTkuODVjLTIuNDk3IDUuNjUgNC44NTMgOSA0Ljg1MyA5IiBzdHJva2U9IiNlY2VjZWMiLz48cGF0aCBkPSJNMTEuNSAzMGM1LjUtMyAxNS41LTMgMjEgMG0tMjEgMy41YzUuNS0zIDE1LjUtMyAyMSAwbS0yMSAzLjVjNS41LTMgMTUuNS0zIDIxIDAiIHN0cm9rZT0iI2VjZWNlYyIvPjwvZz48L3N2Zz4=');
+}
+
+
+/* Status + sheet */
+.side { display: grid; gap: 16px; min-width: 0; }
+.status { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 16px; display: grid; gap: 10px; }
+.pill { justify-self: start; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 4px 9px; border-radius: 99px; border: 1px solid currentColor; }
+.pill.you { color: var(--accent); }
+.pill.claude { color: var(--dark-sq); }
+.pill.over { color: var(--ink); }
+.status p { margin: 0; line-height: 1.5; max-width: 60ch; }
+.ping { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ping code { font-family: var(--font-mono); background: var(--bg); border: 1px solid var(--rule); padding: 6px 10px; border-radius: 4px; user-select: all; }
+button.btn { font: 600 13px var(--font-body); border: 1px solid var(--ink); background: transparent; color: var(--ink); padding: 7px 12px; border-radius: 4px; cursor: pointer; }
+button.btn:hover { background: var(--ink); color: var(--surface); }
+button.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.status p.small { font-size: 13px; color: var(--muted); }
+.note { font-style: italic; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 10px; }
+
+.sheet { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.sheet-head { display: grid; grid-template-columns: 3em 1fr 1fr; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1.5px solid var(--ink); }
+.sheet-head span, .row span { padding: 6px 10px; }
+.rows { max-height: 320px; overflow-y: auto; }
+.row { display: grid; grid-template-columns: 3em 1fr 1fr; font-family: var(--font-mono); font-size: 14px; font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--rule); }
+.row span:first-child { color: var(--muted); border-right: 1px solid var(--rule); }
+.row span + span + span { border-left: 1px solid var(--rule); }
+.row .latest { color: var(--accent); font-weight: 600; }
+.empty { padding: 14px 10px; color: var(--muted); font-size: 13px; }
+.foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.err { color: var(--check); font-size: 13px; margin: 0; }
+@media (prefers-reduced-motion: no-preference) { .sq.last::before, .sq.sel::before { transition: background .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Luke <span class="vs">vs</span> Claude</h1>
+    <span class="event">Correspondence game · one move at a time</span>
+  </header>
+
+  <div class="table">
+    <section class="board-col" aria-label="Chess board">
+      <div class="player black" id="p-black"><span class="dot"></span>Claude <span class="tag" id="tag-black"></span></div>
+      <div class="frame">
+        <div class="board" id="board" role="grid"></div>
+        <div class="coords files" aria-hidden="true"><span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span></div>
+        <div class="coords ranks" aria-hidden="true"><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span></div>
+        <div class="promo" id="promo" hidden>
+          <div class="promo-box">
+            <strong>Promote to</strong>
+            <div class="opts" id="promo-opts"></div>
+          </div>
+        </div>
+      </div>
+      <div class="player white" id="p-white"><span class="dot"></span>Luke <span class="tag" id="tag-white"></span></div>
+    </section>
+
+    <aside class="side">
+      <div class="status" id="status" aria-live="polite">
+        <span class="pill over">Connecting</span>
+        <p>Loading the board…</p>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-head"><span>#</span><span>White</span><span>Black</span></div>
+        <div class="rows" id="rows"><div class="empty">No moves yet. White to play.</div></div>
+      </div>
+
+      <div class="foot">
+        <span class="event" id="fen-label"></span>
+        <div class="confirm" id="reset-area">
+          <button class="btn" id="reset">New game</button>
+        </div>
+      </div>
+      <p class="err" id="err" hidden></p>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script>
+if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.js"><\/script>');
+</script>
+<script>
+(function () {
+  const START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  const FILES = "abcdefgh";
+  const $ = (id) => document.getElementById(id);
+
+  let game = new Chess(START);
+  let state = { fen: START, moves: [], lastMove: null, note: "" };
+  let selected = null;
+  let docRef = null;
+  let saving = false;
+
+  function pieceHTML(p) {
+    return '<span class="pc c' + p.color + " t" + p.type + '"></span>';
+  }
+
+  function kingSquare(color) {
+    const b = game.board();
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const p = b[r][f];
+      if (p && p.type === "k" && p.color === color) return FILES[f] + (8 - r);
+    }
+    return null;
+  }
+
+  function myTurn() { return game.turn() === "w" && !game.game_over() && !saving && docRef; }
+
+  function renderBoard() {
+    const board = $("board");
+    const b = game.board();
+    const targets = selected ? game.moves({ square: selected, verbose: true }) : [];
+    const tmap = {};
+    targets.forEach((m) => { tmap[m.to] = m; });
+    const checkSq = game.in_check() ? kingSquare(game.turn()) : null;
+    let html = "";
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const sq = FILES[f] + (8 - r);
+      const p = b[r][f];
+      const cls = ["sq", (r + f) % 2 ? "d" : "l"];
+      if (state.lastMove && (state.lastMove.from === sq || state.lastMove.to === sq)) cls.push("last");
+      if (sq === checkSq) cls.push("check");
+      if (sq === selected) cls.push("sel");
+      if (tmap[sq]) cls.push("target", p || tmap[sq].flags.includes("e") ? "cap" : "");
+      if (p && p.color === "w" && myTurn()) cls.push("can");
+      const label = sq + (p ? " " + (p.color === "w" ? "white " : "black ") + ({ k: "king", q: "queen", r: "rook", b: "bishop", n: "knight", p: "pawn" })[p.type] : "");
+      html += '<button class="' + cls.join(" ") + '" data-sq="' + sq + '" aria-label="' + label + '">' + (p ? pieceHTML(p) : "") + "</button>";
+    }
+    board.innerHTML = html;
+  }
+
+  function renderSheet() {
+    const rows = $("rows");
+    const mv = state.moves || [];
+    if (!mv.length) { rows.innerHTML = '<div class="empty">No moves yet. White to play.</div>'; return; }
+    let html = "";
+    for (let i = 0; i < mv.length; i += 2) {
+      const latestW = i === mv.length - 1 ? ' class="latest"' : "";
+      const latestB = i + 1 === mv.length - 1 ? ' class="latest"' : "";
+      html += '<div class="row"><span>' + (i / 2 + 1) + "</span><span" + latestW + ">" + esc(mv[i]) + "</span><span" + latestB + ">" + esc(mv[i + 1] || "") + "</span></div>";
+    }
+    rows.innerHTML = html;
+    rows.scrollTop = rows.scrollHeight;
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
+
+  function renderStatus() {
+    const el = $("status");
+    let pill, body;
+    const note = state.note ? '<p class="note">Claude: ' + esc(state.note) + "</p>" : "";
+    if (!docRef) {
+      pill = '<span class="pill over">Offline</span>';
+      body = "<p>This board saves moves to a shared store so Claude can read them. Open it from claude.ai while signed in to play.</p>";
+    } else if (game.in_checkmate()) {
+      const youWon = game.turn() === "b";
+      pill = '<span class="pill over">Checkmate</span>';
+      body = "<p>" + (youWon ? "You win. Well played." : "Claude wins this one.") + " Start a new game whenever you like.</p>" + note;
+    } else if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+      pill = '<span class="pill over">Draw</span>';
+      body = "<p>" + (game.in_stalemate() ? "Stalemate." : game.insufficient_material() ? "Insufficient material." : game.in_threefold_repetition() ? "Threefold repetition." : "Fifty-move rule.") + " The game is drawn.</p>" + note;
+    } else if (saving) {
+      pill = '<span class="pill you">Saving</span>';
+      body = "<p>Recording your move…</p>";
+    } else if (game.turn() === "w") {
+      pill = '<span class="pill you">Your move</span>';
+      body = "<p>" + (game.in_check() ? "<strong>You are in check.</strong> " : "") + "Tap a white piece, then tap where it should go.</p>" + note;
+    } else {
+      pill = '<span class="pill claude">Claude is thinking</span>';
+      body = "<p>Claude was notified of your move and will reply on this board. It usually takes under a minute.</p>" +
+        '<p class="small">No reply after a few minutes? Send this in the chat:</p>' +
+        '<div class="ping"><code id="ping-text">your move</code><button class="btn" id="copy">Copy</button></div>';
+    }
+    el.innerHTML = pill + body;
+    const copy = $("copy");
+    if (copy) copy.addEventListener("click", () => {
+      const t = "your move";
+      navigator.clipboard.writeText(t).then(() => { copy.textContent = "Copied"; }, () => {
+        const r = document.createRange(); r.selectNodeContents($("ping-text"));
+        const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      });
+    });
+    const over = game.game_over();
+    $("tag-white").textContent = !over && game.turn() === "w" ? "to move" : "";
+    $("tag-black").textContent = !over && game.turn() === "b" ? (docRef ? "thinking" : "to move") : "";
+    $("p-white").classList.toggle("to-move", !over && game.turn() === "w");
+    $("p-black").classList.toggle("to-move", !over && game.turn() === "b");
+    $("fen-label").textContent = "Move " + Math.ceil(((state.moves || []).length + 1) / 2);
+  }
+
+  function render() { renderBoard(); renderSheet(); renderStatus(); }
+
+  function showError(msg) { const e = $("err"); e.textContent = msg; e.hidden = !msg; }
+
+  async function commit(move) {
+    const result = game.move(move);
+    if (!result) return;
+    selected = null;
+    const next = {
+      fen: game.fen(),
+      moves: (state.moves || []).concat(result.san),
+      lastMove: { from: result.from, to: result.to },
+      turn: game.turn(),
+      note: "",
+      updatedAt: new Date().toISOString(),
+      by: "luke"
+    };
+    state = next;
+    saving = true;
+    render();
+    try {
+      await docRef.set(next);
+      showError("");
+      notifyClaude(next);
+    } catch (e) {
+      showError("Your move did not save (" + (e && e.code || "error") + "). Reload the page and try again.");
+    } finally {
+      saving = false;
+      render();
+    }
+  }
+
+  // Saving a new version of this page wakes the Claude chat that is playing.
+  // The page republishes its own source (published alongside as page.html)
+  // with only the turn marker changed. Every open view then reloads, and the
+  // game itself is read back from the shared store.
+  const SKELETON_HEAD = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>\n';
+  async function notifyClaude(next) {
+    try {
+      const artifact = await window.claude.use("artifact");
+      if (!artifact) return;
+      const res = await fetch("page.html", { cache: "no-store" });
+      if (!res.ok) return;
+      const src = await res.text();
+      const marker = '<script type="application/json" id="turn-marker">' +
+        JSON.stringify({ ply: next.moves.length, last: next.moves[next.moves.length - 1] }) + "<\/script>";
+      const body = src.replace(/<script type="application\/json" id="turn-marker">[\s\S]*?<\/script>/, marker);
+      if (body === src) return;
+      await artifact.publish(SKELETON_HEAD + body + "\n</body></html>");
+    } catch (e) {
+      // The chat fallback in the status panel still works.
+    }
+  }
+
+  function askPromotion(from, to) {
+    const box = $("promo"), opts = $("promo-opts");
+    opts.innerHTML = "";
+    ["q", "r", "b", "n"].forEach((t) => {
+      const b = document.createElement("button");
+      b.innerHTML = pieceHTML({ type: t, color: "w" });
+      b.setAttribute("aria-label", ({ q: "Queen", r: "Rook", b: "Bishop", n: "Knight" })[t]);
+      b.addEventListener("click", () => { box.hidden = true; commit({ from, to, promotion: t }); });
+      opts.appendChild(b);
+    });
+    box.hidden = false;
+    opts.firstChild.focus();
+  }
+
+  $("board").addEventListener("click", (ev) => {
+    const btn = ev.target.closest(".sq");
+    if (!btn || !myTurn()) return;
+    const sq = btn.dataset.sq;
+    const p = game.get(sq);
+    if (selected) {
+      const m = game.moves({ square: selected, verbose: true }).find((x) => x.to === sq);
+      if (m) {
+        if (m.flags.includes("p")) askPromotion(selected, sq);
+        else commit({ from: selected, to: sq });
+        return;
+      }
+    }
+    selected = p && p.color === "w" && sq !== selected ? sq : null;
+    renderBoard();
+    const again = document.querySelector('[data-sq="' + sq + '"]');
+    if (again) again.focus();
+  });
+
+  function bindReset() {
+    const area = $("reset-area");
+    $("reset").addEventListener("click", () => {
+      area.innerHTML = '<span>Start over and clear this game?</span><button class="btn" id="reset-yes">Yes, new game</button><button class="btn" id="reset-no">Keep playing</button>';
+      $("reset-yes").addEventListener("click", async () => {
+        restoreReset();
+        if (!docRef) return;
+        try {
+          await docRef.set({ fen: START, moves: [], lastMove: null, turn: "w", note: "", updatedAt: new Date().toISOString(), by: "luke" });
+        } catch (e) { showError("Could not reset the game (" + (e && e.code || "error") + ")."); }
+      });
+      $("reset-no").addEventListener("click", restoreReset);
+    });
+  }
+  function restoreReset() { $("reset-area").innerHTML = '<button class="btn" id="reset">New game</button>'; bindReset(); }
+  bindReset();
+
+  function apply(data) {
+    const fen = (data && data.fen) || START;
+    const g = new Chess();
+    if (!g.load(fen)) { showError("The saved position is invalid."); return; }
+    game = g;
+    state = { fen, moves: (data && data.moves) || [], lastMove: (data && data.lastMove) || null, note: (data && data.note) || "" };
+    if (selected && !(game.get(selected) && game.turn() === "w")) selected = null;
+    render();
+  }
+
+  render();
+
+  (async function connect() {
+    const db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+    if (!db) { render(); return; }
+    docRef = db.doc("games/current");
+    docRef.onSnapshot((snap) => {
+      if (saving) return;
+      apply(snap.exists ? snap.data() : null);
+    }, (e) => {
+      showError("Lost the live connection (" + (e && e.code || "error") + "). Reload to reconnect.");
+    });
+    render();
+  })();
+})();
+</script>
