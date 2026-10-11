@@ -1,5 +1,5 @@
 <title>Luke vs Claude</title>
-<script type="application/json" id="turn-marker">{"ply":0}</script>
+<script type="application/json" id="turn-marker">{"ply":5,"last":"Bc4"}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
@@ -312,7 +312,7 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
       });
     });
     const ping = $("ping-claude");
-    if (ping) ping.addEventListener("click", () => nudgeClaude(ping));
+    if (ping) { ping.addEventListener("click", () => nudgeClaude(ping)); refreshNudge(); }
     const over = game.game_over();
     $("tag-white").textContent = !over && game.turn() === "w" ? "to move" : "";
     $("tag-black").textContent = !over && game.turn() === "b" ? (docRef ? "thinking" : "to move") : "";
@@ -353,30 +353,41 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     }
   }
 
-  // The nudge button messages the Claude chat that is playing this game,
-  // through the viewer's Claude Code Remote connector.
-  const CLAUDE_SESSION = "session_017ys9QBDZvGVVAgczaPWQ1S";
+  // The nudge button posts a comment on the board and sends it to Claude,
+  // which wakes the Claude chat that is playing this game.
+  let commentsApi = null;
+  async function refreshNudge() {
+    const btn = $("ping-claude"), out = $("ping-result");
+    if (!btn) return;
+    if (!commentsApi) { btn.disabled = true; out.textContent = "Sending isn't available in this view. Use the chat instead."; return; }
+    let can;
+    try { can = await commentsApi.canSendToClaude(); } catch (e) { can = "off"; }
+    if (!$("ping-claude")) return;
+    if (can === "available") { btn.disabled = false; out.textContent = ""; return; }
+    btn.disabled = true;
+    out.textContent =
+      can === "writers_only" ? "Only the board's owner can send this. Use the chat instead." :
+      can === "no_session" ? "Claude's chat isn't listening right now. Send \"your move\" in the chat." :
+      "Sending isn't available in this view. Use the chat instead.";
+  }
   async function nudgeClaude(btn) {
     const out = $("ping-result");
     btn.disabled = true;
     out.textContent = "Sending…";
     try {
-      const mcp = await window.claude.use("mcp");
-      if (!mcp) { out.textContent = "This view can't send messages. Use the chat instead."; btn.disabled = false; return; }
-      const last = (state.moves || [])[state.moves.length - 1] || "";
-      await mcp.callTool("Claude Code Remote", "send_message", {
-        session_id: CLAUDE_SESSION,
-        message: "Chess board: Luke played " + last + " (move " + Math.ceil((state.moves || []).length / 2) + "). Your move."
-      }, { cache: false });
+      const mv = state.moves || [];
+      const last = mv[mv.length - 1] || "";
+      const anchor = await commentsApi.anchorFor(document.querySelector(".frame"));
+      await commentsApi.sendToClaude({ anchor, text: "Chess board: I played " + last + " (move " + Math.ceil(mv.length / 2) + "). Your move." });
       btn.textContent = "Sent";
       out.textContent = "Claude got your nudge.";
     } catch (e) {
       const code = e && e.code;
       btn.disabled = false;
       out.textContent =
-        code === "server_not_connected" ? "The Claude Code Remote connector isn't connected. Use the chat instead." :
-        code === "not_in_manifest" || code === "approval_required" ? "Sending wasn't allowed. Tap again and choose Allow, or use the chat." :
-        code === "needs_reauth" ? "Reconnect Claude Code Remote in claude.ai Settings, then try again." :
+        code === "consent_required" || code === "forbidden" ? "Sending wasn't allowed. Tap again and choose Allow, or use the chat." :
+        code === "rate_limited" ? "Too many nudges in a row. Wait a minute and try again." :
+        code === "claude_unavailable" ? "Claude's chat isn't listening right now. Send \"your move\" in the chat." :
         "Couldn't send (" + (code || "error") + "). Use the chat instead.";
     }
   }
@@ -469,6 +480,7 @@ if (typeof Chess === "undefined") document.write('<script src="https://cdn.jsdel
     const db = window.claude && window.claude.use ? await window.claude.use("db") : null;
     if (!db) { render(); return; }
     docRef = db.doc("games/current");
+    window.claude.use("comments").then((c) => { commentsApi = c; refreshNudge(); }, () => {});
     docRef.onSnapshot((snap) => {
       if (saving) return;
       apply(snap.exists ? snap.data() : null);
