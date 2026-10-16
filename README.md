@@ -38,3 +38,26 @@ of territory, `TRAIL_ALPHA` / `TRAIL_FADE` / `TRAIL_WIDTH` the smear, and
 `BOUNCE_VOLUME` through `HARD_HIT` the sound. Note the comment on `MAX_SPEED`:
 collisions are tested once a frame, so raising it too far lets balls tunnel
 through lines and through each other.
+
+# Backseat Brawl
+
+`backseat-brawl/index.html` is a two-player party game for one phone, made for
+long car journeys. Hold the phone sideways between you: the left half of the
+screen is Orange, the right half is Blue. Every game is played by tapping or
+holding your own half, so it still works on a bumpy road.
+
+Eight micro-games are dealt in random order, and the first player to 5 points
+wins (tap the pill on the title screen to switch to 3 or 7):
+
+- **Green Light**: tap on green; jumping the light (including prank ambers) hands over the point.
+- **Pump It**: pump your balloon. Both balloons burst at the same secret size, and the biggest one left wins.
+- **Armrest War**: mash to shove the other elbow off the armrest.
+- **Park It**: brake (with momentum) as close to the wall as you dare.
+- **Pass the Bomb**: tap the number on the bomb to throw it back. Each throw needs one more tap.
+- **Cow Spotter**: tap only for a cow. Bulls and buffalo are not cows.
+- **Pothole Hop**: same road for both of you; jump cones and potholes, and the last car still driving wins.
+- **Tunnel Vision**: both hold, then let go at exactly N seconds after the clock disappears.
+
+Open the file in Safari (no install, no build). It needs a connection only for
+the fonts; once loaded it plays offline. On a computer, `A` and `L` act as the
+two players' thumbs.
